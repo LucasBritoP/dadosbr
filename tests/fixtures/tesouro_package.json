@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "result": {
+    "resources": [
+      {
+        "id": "796d2059-14e9-44e3-80c9-2d9e30b405c1",
+        "format": "CSV",
+        "url": "https://example.invalid/tesouro.csv"
+      }
+    ]
+  }
+}

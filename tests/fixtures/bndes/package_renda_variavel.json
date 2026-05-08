@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "result": {
+    "resources": [
+      {
+        "id": "deb-id",
+        "name": "debentures_serie",
+        "format": "CSV",
+        "url": "https://example.test/debentures.csv"
+      },
+      {
+        "id": "fund-id",
+        "name": "fundos_participacoes",
+        "format": "CSV",
+        "url": "https://example.test/fundos.csv"
+      }
+    ]
+  }
+}

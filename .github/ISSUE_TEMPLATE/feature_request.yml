@@ -1,0 +1,31 @@
+name: Feature request
+description: Sugira uma melhoria de API, MCP, normalizacao ou ferramenta.
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema que a melhoria resolve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Escopo
+      options:
+        - label: API HTTP
+        - label: MCP
+        - label: Conector de fonte primaria
+        - label: Camada derivada/normalizacao
+        - label: Documentacao

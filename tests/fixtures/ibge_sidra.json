@@ -1,0 +1,12 @@
+[
+  { "NN": "Nivel Territorial", "V": "Valor" },
+  {
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "63",
+    "D2N": "IPCA",
+    "D3C": "202604",
+    "MN": "%",
+    "V": "0,21"
+  }
+]
