@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "result": {
+    "resources": [
+      {
+        "id": "6f56b78c-510f-44b6-8274-78a5b7e931f4",
+        "name": "Operacoes",
+        "format": "CSV",
+        "url": "https://example.test/operacoes.csv"
+      }
+    ]
+  }
+}

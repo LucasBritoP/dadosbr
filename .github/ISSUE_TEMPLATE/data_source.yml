@@ -1,0 +1,34 @@
+name: Nova fonte de dados
+description: Proponha uma fonte gratuita/oficial para o DadosBR.
+title: "[data-source]: "
+labels: ["data-source"]
+body:
+  - type: input
+    id: source_name
+    attributes:
+      label: Nome da fonte
+    validations:
+      required: true
+  - type: input
+    id: source_url
+    attributes:
+      label: URL oficial
+    validations:
+      required: true
+  - type: textarea
+    id: license
+    attributes:
+      label: Licenca/termos de uso
+      description: Inclua link para termos, licenca ou pagina de dados abertos.
+    validations:
+      required: true
+  - type: textarea
+    id: fields
+    attributes:
+      label: Dados disponiveis
+    validations:
+      required: true
+  - type: textarea
+    id: update_frequency
+    attributes:
+      label: Frequencia de atualizacao

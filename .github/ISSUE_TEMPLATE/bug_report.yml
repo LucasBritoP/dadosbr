@@ -1,0 +1,37 @@
+name: Bug report
+description: Reporte uma falha reproduzivel no DadosBR.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Obrigado por reportar. Inclua um caso minimo para reproduzir.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir
+      description: Comandos, endpoint, parametros e fixture pequena se possivel.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versao do DadosBR
+      placeholder: 0.1.0a0
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs ou resposta JSON
+      render: text

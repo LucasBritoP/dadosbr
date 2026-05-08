@@ -1,0 +1,1 @@
+"""DadosBR admin CLI."""

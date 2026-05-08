@@ -1,0 +1,2 @@
+cliente;cnpj;uf;municipio;data_da_contratacao;valor_contratado_reais;valor_desembolsado_reais;setor_cnae;setor_bndes;porte_do_cliente;situacao_do_contrato
+ACME DADOS LTDA;12345678000190;SP;SAO PAULO;2026-01-10;1000000.50;500000.25;6201;Tecnologia;MPME;Ativo
