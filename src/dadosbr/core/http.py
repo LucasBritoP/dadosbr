@@ -14,7 +14,7 @@ from .cache import DiskCache
 from .errors import DataSourceError
 
 
-DEFAULT_USER_AGENT = "dadosbr/0.1.0 (+https://github.com/)"
+DEFAULT_USER_AGENT = "dadosbr/0.1.0 (+https://github.com/rodrigobdz/dadosbr)"
 DEFAULT_HTTP_RETRIES = 2
 DEFAULT_RETRY_BACKOFF_SECONDS = 0.25
 DEFAULT_MAX_STALE_SECONDS = 7 * 24 * 60 * 60
@@ -405,7 +405,7 @@ def _stale_cache_allowed(*, strict: bool = False) -> bool:
 def _stale_age_allowed(age_seconds: int, *, max_stale_seconds: int | None = None) -> bool:
     limit = _max_stale_seconds() if max_stale_seconds is None else max_stale_seconds
     if limit <= 0:
-        return True
+        return False
     return age_seconds <= limit
 
 
