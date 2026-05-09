@@ -158,7 +158,7 @@ def test_http_get_bytes_cached_returns_stale_cache_on_retryable_fetch_error(monk
     cache_root = tmp_path / "cache"
     monkeypatch.setenv("DADOSBR_CACHE_DIR", str(cache_root))
     monkeypatch.setenv("DADOSBR_CACHE_TTL_SECONDS", "1")
-    monkeypatch.setenv("DADOSBR_MAX_STALE_SECONDS", "0")
+    monkeypatch.setenv("DADOSBR_MAX_STALE_SECONDS", "999999999")
 
     def first_fetch(url: str, **_kwargs):
         return b"cached-body", {"content-type": "text/plain"}
@@ -169,7 +169,7 @@ def test_http_get_bytes_cached_returns_stale_cache_on_retryable_fetch_error(monk
 
     cache_file = next(cache_root.rglob("*.json"))
     payload = json.loads(cache_file.read_text(encoding="utf-8"))
-    payload["created_at"] = "2000-01-01T00:00:00+00:00"
+    payload["created_at"] = "2026-05-09T00:00:00+00:00"
     cache_file.write_text(json.dumps(payload), encoding="utf-8")
 
     def failing_fetch(url: str, **_kwargs):
@@ -213,3 +213,9 @@ def test_http_get_bytes_cached_strict_mode_rejects_stale_cache(monkeypatch, tmp_
         assert exc.code == "network_error"
     else:  # pragma: no cover
         raise AssertionError("strict mode should not return stale cache")
+
+
+def test_stale_age_allowed_disables_stale_when_limit_zero(monkeypatch) -> None:
+    monkeypatch.setenv("DADOSBR_MAX_STALE_SECONDS", "0")
+
+    assert http._stale_age_allowed(1) is False
