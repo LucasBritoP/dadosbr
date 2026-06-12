@@ -252,6 +252,8 @@ def http_get_bytes_cached(
         sort_keys=True,
     )
     cached_entry = cache.get_with_metadata(key)
+    expired_entry = None if cached_entry else cache.get_with_metadata(key, allow_expired=True)
+    previous_body_file = _body_file_from_entry(cached_entry or expired_entry)
     if cached_entry:
         cached, metadata = cached_entry
         cached_body = _cached_body_from_record(cache, cached)
@@ -270,7 +272,7 @@ def http_get_bytes_cached(
             verify_ssl=verify_ssl,
         )
     except DataSourceError as exc:
-        stale_entry = cache.get_with_metadata(key, allow_expired=True)
+        stale_entry = expired_entry or cache.get_with_metadata(key, allow_expired=True)
         if _stale_cache_allowed(strict=strict) and exc.retryable and stale_entry:
             cached, metadata = stale_entry
             cached_body = _cached_body_from_record(cache, cached)
@@ -300,15 +302,21 @@ def http_get_bytes_cached(
             "x-dadosbr-cache-skip-reason": "body_too_large",
             "x-dadosbr-cache-body-bytes": str(body_size),
         }
-    cache.set(
-        key,
-        {
-            "url": url,
-            "headers": dict(response_headers),
-            "body_size_bytes": body_size,
-            **_cached_body_record(cache, key, body),
-        },
-    )
+    new_body_record = _cached_body_record(cache, key, body)
+    try:
+        cache.set(
+            key,
+            {
+                "url": url,
+                "headers": dict(response_headers),
+                "body_size_bytes": body_size,
+                **new_body_record,
+            },
+        )
+    except OSError:
+        _delete_body_file_from_record(cache, new_body_record)
+        raise
+    _delete_replaced_body_file(cache, previous_body_file, new_body_record)
     return body, {**response_headers, "x-dadosbr-cache": "miss", "x-dadosbr-cache-body-bytes": str(body_size)}
 
 
@@ -432,6 +440,38 @@ def _cached_body_from_record(cache: DiskCache, record: dict[str, Any]) -> bytes 
         except OSError:
             return None
     return None
+
+
+def _body_file_from_entry(entry: tuple[dict[str, Any], dict[str, Any]] | None) -> str | None:
+    if entry is None:
+        return None
+    body_file = entry[0].get("body_file")
+    if isinstance(body_file, str) and body_file.strip():
+        return body_file
+    return None
+
+
+def _delete_replaced_body_file(
+    cache: DiskCache,
+    previous_body_file: str | None,
+    new_body_record: dict[str, str],
+) -> None:
+    if previous_body_file is None or previous_body_file == new_body_record.get("body_file"):
+        return
+    _delete_body_file(cache, previous_body_file)
+
+
+def _delete_body_file_from_record(cache: DiskCache, record: dict[str, str]) -> None:
+    body_file = record.get("body_file")
+    if body_file:
+        _delete_body_file(cache, body_file)
+
+
+def _delete_body_file(cache: DiskCache, body_file: str) -> None:
+    try:
+        cache.delete_bytes(body_file)
+    except OSError:
+        return
 
 
 def _http_cache_max_inline_bytes() -> int:
