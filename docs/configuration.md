@@ -29,7 +29,7 @@ Use o extra `enriched` somente quando precisar de `adjusted_close`, dividendos o
 | `DADOSBR_DISABLE_HTTP_CACHE` | Não | `0` | Desativa cache quando valor é `1`, `true`, `yes` ou `on`. |
 | `DADOSBR_DISABLE_STALE_CACHE` | Não | `0` | Desativa fallback para cache expirado quando a fonte falha. |
 | `DADOSBR_STRICT_FRESH` | Não | `0` | Força falha em vez de usar cache stale. |
-| `DADOSBR_MAX_STALE_SECONDS` | Não | `604800` | Idade máxima global para cache stale; `0` permite sem limite global. |
+| `DADOSBR_MAX_STALE_SECONDS` | Não | `604800` | Idade máxima global para cache stale; `0` desativa o uso de cache stale. |
 | `DADOSBR_HTTP_RETRIES` | Não | `2` | Número máximo de tentativas por chamada HTTP retryable. |
 | `DADOSBR_HTTP_RETRY_BACKOFF_SECONDS` | Não | `0.25` | Backoff base entre retentativas HTTP. |
 | `DADOSBR_CA_BUNDLE` | Não | vazio | Caminho para bundle CA customizado; também são aceitos `REQUESTS_CA_BUNDLE` e `SSL_CERT_FILE`. |

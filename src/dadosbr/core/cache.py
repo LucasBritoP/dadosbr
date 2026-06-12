@@ -75,6 +75,16 @@ class DiskCache:
             raise FileNotFoundError("Empty cache blob name.")
         return (self.cache_dir / safe_name).read_bytes()
 
+    def delete_bytes(self, filename: str) -> bool:
+        safe_name = Path(str(filename or "")).name
+        if not safe_name:
+            return False
+        try:
+            (self.cache_dir / safe_name).unlink()
+        except FileNotFoundError:
+            return False
+        return True
+
 
 def _atomic_write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

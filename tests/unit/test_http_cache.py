@@ -78,6 +78,121 @@ def test_http_get_bytes_cached_stores_large_body_as_sidecar(monkeypatch, tmp_pat
     assert body_file.read_bytes() == b"larger-than-inline"
 
 
+def test_http_get_bytes_cached_removes_replaced_sidecar_body(monkeypatch, tmp_path) -> None:
+    calls = {"count": 0}
+
+    def fake_get(url: str, **_kwargs):
+        calls["count"] += 1
+        return f"larger-than-inline-{calls['count']}".encode(), {"content-type": "application/zip"}
+
+    cache_root = tmp_path / "cache"
+    monkeypatch.setenv("DADOSBR_CACHE_DIR", str(cache_root))
+    monkeypatch.setenv("DADOSBR_CACHE_TTL_SECONDS", "1")
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_INLINE_BYTES", "4")
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_BODY_BYTES", "1024")
+
+    first_body, first_headers = http.http_get_bytes_cached(
+        "https://example.test/data.zip",
+        source_id="test",
+        fetcher=fake_get,
+    )
+    cache_file = next(cache_root.rglob("*.json"))
+    first_payload = json.loads(cache_file.read_text(encoding="utf-8"))
+    first_body_file = cache_file.parent / first_payload["value"]["body_file"]
+    first_payload["created_at"] = "2000-01-01T00:00:00+00:00"
+    cache_file.write_text(json.dumps(first_payload), encoding="utf-8")
+
+    second_body, second_headers = http.http_get_bytes_cached(
+        "https://example.test/data.zip",
+        source_id="test",
+        fetcher=fake_get,
+    )
+    second_payload = json.loads(cache_file.read_text(encoding="utf-8"))
+    second_body_file = cache_file.parent / second_payload["value"]["body_file"]
+
+    assert first_body == b"larger-than-inline-1"
+    assert second_body == b"larger-than-inline-2"
+    assert first_headers["x-dadosbr-cache"] == "miss"
+    assert second_headers["x-dadosbr-cache"] == "miss"
+    assert first_body_file != second_body_file
+    assert not first_body_file.exists()
+    assert second_body_file.read_bytes() == b"larger-than-inline-2"
+    assert list(cache_root.rglob("*.body")) == [second_body_file]
+
+
+def test_http_get_bytes_cached_removes_new_sidecar_when_metadata_write_fails(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    def fake_get(url: str, **_kwargs):
+        return b"larger-than-inline", {"content-type": "application/zip"}
+
+    def failing_set(self, key, value):
+        raise OSError("metadata write failed")
+
+    cache_root = tmp_path / "cache"
+    monkeypatch.setenv("DADOSBR_CACHE_DIR", str(cache_root))
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_INLINE_BYTES", "4")
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_BODY_BYTES", "1024")
+    monkeypatch.setattr(http.DiskCache, "set", failing_set)
+
+    try:
+        http.http_get_bytes_cached(
+            "https://example.test/data.zip",
+            source_id="test",
+            fetcher=fake_get,
+        )
+    except OSError as exc:
+        assert str(exc) == "metadata write failed"
+    else:  # pragma: no cover
+        raise AssertionError("metadata write failure should be propagated")
+
+    assert list(cache_root.rglob("*.body")) == []
+
+
+def test_http_get_bytes_cached_does_not_fail_when_old_sidecar_cleanup_fails(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    calls = {"count": 0}
+
+    def fake_get(url: str, **_kwargs):
+        calls["count"] += 1
+        return f"larger-than-inline-{calls['count']}".encode(), {"content-type": "application/zip"}
+
+    cache_root = tmp_path / "cache"
+    monkeypatch.setenv("DADOSBR_CACHE_DIR", str(cache_root))
+    monkeypatch.setenv("DADOSBR_CACHE_TTL_SECONDS", "1")
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_INLINE_BYTES", "4")
+    monkeypatch.setenv("DADOSBR_HTTP_CACHE_MAX_BODY_BYTES", "1024")
+
+    first_body, _first_headers = http.http_get_bytes_cached(
+        "https://example.test/data.zip",
+        source_id="test",
+        fetcher=fake_get,
+    )
+    cache_file = next(cache_root.rglob("*.json"))
+    first_payload = json.loads(cache_file.read_text(encoding="utf-8"))
+    first_payload["created_at"] = "2000-01-01T00:00:00+00:00"
+    cache_file.write_text(json.dumps(first_payload), encoding="utf-8")
+
+    def failing_delete(self, filename):
+        raise OSError("cleanup failed")
+
+    monkeypatch.setattr(http.DiskCache, "delete_bytes", failing_delete)
+
+    second_body, second_headers = http.http_get_bytes_cached(
+        "https://example.test/data.zip",
+        source_id="test",
+        fetcher=fake_get,
+    )
+
+    assert first_body == b"larger-than-inline-1"
+    assert second_body == b"larger-than-inline-2"
+    assert second_headers["x-dadosbr-cache"] == "miss"
+    assert len(list(cache_root.rglob("*.body"))) == 2
+
+
 def test_http_get_bytes_cached_skips_cache_when_body_exceeds_limit(monkeypatch, tmp_path) -> None:
     calls = {"count": 0}
 
